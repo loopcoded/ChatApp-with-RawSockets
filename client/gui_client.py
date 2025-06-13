@@ -207,6 +207,14 @@ class ChatGUI:
             header = self.client_socket.recv(64).decode().strip()
             file_name, file_size = header.split("|")
             file_size = int(file_size)
+            consent = messagebox.askyesno(
+                "Incoming File",
+                f"You have received a file: '{file_name}' ({file_size} bytes).\n\nDo you want to download it?"
+            )
+    
+            if not consent:
+                self.add_message(f"❌ You declined the file: '{file_name}'", "system")
+                return  # Skip receiving the file
             
             self.add_message(f"Receiving file '{file_name}' ({file_size} bytes)...", "system")
             
