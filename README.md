@@ -1,6 +1,6 @@
 # 🔐 ChatSecure – Encrypted Multi-Client Chat Application Over Raw TCP Sockets
 
-> **A low-level, real-time chat system** built from the ground up using **Python sockets** and **RSA encryption**, supporting **multi-client communication**, **private messaging**, **secure file transfers**, and a **Tkinter-based GUI** and now **user authentication with duplicate login prevention** — all without using external chat frameworks.
+**A low-level, real-time chat system** built from the ground up using **Python sockets** and **RSA encryption**, supporting **multi-client communication**, **private messaging**, **secure file transfers**, and a **Tkinter-based GUI** and now **user authentication with duplicate login prevention** — all without using external chat frameworks.
 
 
 
