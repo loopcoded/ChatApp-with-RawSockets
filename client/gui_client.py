@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 from backend.rsa_utils import encrypt_message
 from cryptography.hazmat.primitives import serialization
+from backend.auth_utils import register_user, authenticate_user
+from tkinter import Toplevel, Label, Entry, Button, messagebox
 
 class ChatGUI:
     def __init__(self, root):
@@ -30,9 +32,56 @@ class ChatGUI:
         self.pending_server_response = None
         self.response_event = threading.Event()
         
+        self.show_auth_window()
+        if not self.username:
+            self.root.destroy()  # User closed auth window
+            return
         self.setup_gui()
         self.connect_to_server()
-        
+
+    def show_auth_window(self):
+        auth_window = Toplevel()
+        auth_window.title("Login or Register")
+        auth_window.geometry("300x200")
+        auth_window.grab_set()  # Make modal
+
+        def handle_auth(mode):
+            uname = username_entry.get().strip()
+            pwd = password_entry.get().strip()
+            if not uname or not pwd:
+                messagebox.showerror("Error", "Please fill all fields.")
+                return
+
+            if mode == "Register":
+                success, msg = register_user(uname, pwd)
+                if success:
+                    messagebox.showinfo("Success", msg)
+                    auth_window.destroy()
+                    self.username = uname
+                else:
+                    messagebox.showerror("Error", msg)
+
+            elif mode == "Login":
+                if authenticate_user(uname, pwd):
+                    messagebox.showinfo("Success", "Login successful.")
+                    auth_window.destroy()
+                    self.username = uname
+                else:
+                    messagebox.showerror("Error", "Login failed.")
+
+        Label(auth_window, text="Username").pack()
+        username_entry = Entry(auth_window)
+        username_entry.pack()
+
+        Label(auth_window, text="Password").pack()
+        password_entry = Entry(auth_window, show="*")
+        password_entry.pack()
+
+        Button(auth_window, text="Login", command=lambda: handle_auth("Login")).pack(pady=5)
+        Button(auth_window, text="Register", command=lambda: handle_auth("Register")).pack()
+
+        auth_window.wait_window()  # Wait for user input
+    
     def setup_gui(self):
         # Main container
         main_frame = tk.Frame(self.root, bg='#2c3e50')
@@ -125,12 +174,9 @@ class ChatGUI:
         
     def connect_to_server(self):
         try:
-            # Get username
-            self.username = simpledialog.askstring("Username", "Enter your username:")
             if not self.username:
-                self.root.destroy()
+                messagebox.showerror("Error", "Username not set. Please login first.")
                 return
-            
             # Load server's public key
             try:
                 with open("../backend/server_public.pem", "rb") as f:
@@ -152,6 +198,7 @@ class ChatGUI:
             
             # Start receive thread
             threading.Thread(target=self.receive_messages, daemon=True).start()
+            
             
             self.add_message("Connected to server!", "system")
             

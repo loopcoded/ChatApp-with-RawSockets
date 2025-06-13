@@ -23,7 +23,13 @@ def handle_client(conn, addr):
     try:
         # First message must be username
         username = conn.recv(1024).decode().strip()
+        # Step 2: Check for duplicate login
         with lock:
+            if username in clients:
+                conn.sendall("[Server]: Duplicate login detected. Connection rejected.".encode())
+                conn.close()
+                print(f"[!] Rejected duplicate login for '{username}' from {addr}")
+                return
             clients[username] = conn
         print(f"[+] {username} ({addr}) joined the chat.")
 

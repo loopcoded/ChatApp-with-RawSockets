@@ -7,10 +7,33 @@ import socket
 import time
 from backend.rsa_utils import encrypt_message
 from cryptography.hazmat.primitives import serialization
-
+from backend.auth_utils import register_user, authenticate_user
 HOST = '127.0.0.1'
 PORT = 5000
 
+def auth_prompt():
+    print("Welcome to Secure Chat 🚪")
+    while True:
+        mode = input("[1] Login\n[2] Register\nChoose: ").strip()
+        if mode not in ["1", "2"]:
+            print("❗Invalid choice.")
+            continue
+        username = input("Enter username: ").strip()
+        password = input("Enter password: ").strip()
+
+        if mode == "2":
+            success, msg = register_user(username, password)
+            print(msg)
+            if not success:
+                continue
+        elif mode == "1":
+            if not authenticate_user(username, password):
+                print("❌ Login failed.")
+                continue
+            else:
+                print("✅ Login successful.")
+        return username
+    
 # Load server's public key
 with open("../backend/server_public.pem", "rb") as f:
     server_public_key = serialization.load_pem_public_key(f.read())
@@ -19,7 +42,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
 # Enter username
-username = input("Enter your username: ")
+username = auth_prompt()
 client_socket.sendall(username.encode())
 
 # Shared variables for thread communication
@@ -28,6 +51,7 @@ file_transfer_lock = threading.Lock()
 pending_server_response = None
 response_event = threading.Event()
 
+  
 def receive_messages():
     global file_transfer_mode, pending_server_response
     
