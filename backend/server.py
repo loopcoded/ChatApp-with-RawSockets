@@ -31,11 +31,18 @@ def handle_client(conn, addr):
                 print(f"[!] Rejected duplicate login for '{username}' from {addr}")
                 return
             clients[username] = conn
-        print(f"[+] {username} ({addr}) joined the chat.")
+            print(f"[+] {username} ({addr}) joined the chat.")
+            
+            # Send list of currently online users (excluding the new user)
+            other_users = [user for user in clients.keys() if user != username]
+            if other_users:
+                user_list = ", ".join(other_users)
+                conn.sendall(f"[Server]: Currently online: {user_list}".encode())
+            else:
+                conn.sendall("[Server]: You're the first user online.".encode())
 
-        # Welcome broadcast
-        broadcast(f"[Server]: {username} joined the chat.", sender=None)
-
+        # Welcome broadcast to all other users
+        broadcast(f"[Server]: {username} joined the chat.", sender=username)
         while True:
             data = conn.recv(4096)
             if not data:

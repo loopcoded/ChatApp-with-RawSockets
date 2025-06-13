@@ -215,7 +215,10 @@ class ChatGUI:
                 
                 try:
                     decoded = data.decode()
-                    
+                    if decoded.startswith("[Server]: Currently online:"):
+                        self.update_user_list(decoded)
+                    else:
+                        self.display_message(decoded)
                     # Handle server responses for file transfers
                     if decoded.startswith("[Server]:") and ("Ready" in decoded or "rejected" in decoded or "not found" in decoded or "sent successfully" in decoded):
                         with self.file_transfer_lock:
@@ -293,7 +296,17 @@ class ChatGUI:
             self.add_message(f"Error receiving file: {e}", "system")
     
     def update_user_list(self, message):
-        if "joined the chat" in message:
+        if "[Server]: Currently online:" in message:
+            # Extract usernames from "[Server]: Currently online: user1, user2, ..."
+            try:
+                users_part = message.split("Currently online: ")[1].strip()
+                if users_part and users_part != "":
+                    self.users_online = set(users_part.split(", "))
+                else:
+                    self.users_online.clear()
+            except:
+                self.users_online.clear()
+        elif "joined the chat" in message:
             # Extract username from "[Server]: username joined the chat."
             try:
                 username = message.split(": ")[1].split(" joined")[0]
@@ -310,9 +323,13 @@ class ChatGUI:
                 pass
         
         # Update listbox
+        self.root.after(0, self.refresh_user_listbox)
+    
+    def refresh_user_listbox(self):
         self.users_listbox.delete(0, tk.END)
         for user in sorted(self.users_online):
-            self.users_listbox.insert(tk.END, user)
+            if user != self.username:
+                self.users_listbox.insert(tk.END, user)
     
     def display_message(self, message):
         if message.startswith("[Private]"):
