@@ -1,6 +1,8 @@
 # 🔐 ChatSecure – Encrypted Multi-Client Chat Application Over Raw TCP Sockets
 
-> **A low-level, real-time chat system** built from the ground up using **Python sockets** and **RSA encryption**, supporting **multi-client communication**, **private messaging**, **secure file transfers**, and a **Tkinter-based GUI** — all without using external chat frameworks.
+> **A low-level, real-time chat system** built from the ground up using **Python sockets** and **RSA encryption**, supporting **multi-client communication**, **private messaging**, **secure file transfers**, and a **Tkinter-based GUI** and now **user authentication with duplicate login prevention** — all without using external chat frameworks.
+
+
 
 ---
 
@@ -10,9 +12,11 @@ This is not just another chat app. `ChatSecure` is a **system-level networking p
 
 - 📡 **Low-level networking**: Uses raw **TCP socket programming** and **multi-threading**
 - 🔐 **End-to-End Encryption**: Implements **RSA public-key encryption** for all message transfers
+- 🔐 **Login/Register Authentication**: Username-password system before accessing chat
+- 🚫 **Duplicate Login Prevention**: A user can only be logged in once at a time
 - 🧵 **Concurrency & Multi-client**: Handles multiple clients via threaded server design
 - 💬 **Private Messaging Support**: Chat one-on-one with other users using commands
-- 🗂️ **File Transfer Capability**: Send files securely between clients over TCP
+- 🗂️ **File Transfer with Consent**: Send files **only with recipient approval**
 - 🖥️ **Custom GUI Client**: Built from scratch using **Tkinter** for real-time UX
 - 💻 **CLI fallback client**: Lightweight command-line client included
 
@@ -49,7 +53,8 @@ This is not just another chat app. `ChatSecure` is a **system-level networking p
 | Networking  | Python Sockets (TCP), Threading |
 | Encryption  | RSA via `cryptography` |
 | Interface   | Tkinter (GUI), CLI |
-| File Handling | Binary stream transfer |
+| Auth System   | Username-password with duplicate prevention |
+| File Handling | Binary stream transfer with user confirmation |
 | Deployment  | Python 3.x |
 
 ---
@@ -65,6 +70,11 @@ This is not just another chat app. `ChatSecure` is a **system-level networking p
 | 🖥️ GUI Client (Tkinter)| Graphical interface with chat, input, file buttons |
 | 🧵 Threaded Server     | Each client runs in a separate thread |
 | 🧪 CLI Client (Optional)| Use terminal version for headless operation |
+| 👤 **Login/Register UI**         | Auth screen before entering the chat |
+| 🚫 **Duplicate Login Detection** | Prevents the same user from logging in multiple times |
+| ✅ **File Transfer Confirmation**| Users must accept before receiving any files |
+| 📜 **Persistent Server Key**     | RSA keys are saved and reused for consistent encryption |
+
 
 ---
 
@@ -74,13 +84,16 @@ This is not just another chat app. `ChatSecure` is a **system-level networking p
 ```bash
 chat-app-socket-rsa/
 ├── backend/
-│   ├── server.py           # Multi-threaded encrypted server
-│   ├── rsa_utils.py        # RSA key utilities
-│   └── server_public.pem   # Public key shared with clients
+│   ├── server.py             # Multi-threaded encrypted server with auth + file routing
+│   ├── rsa_utils.py          # RSA key utilities (encrypt, decrypt, generate)
+│   ├── auth_utils.py         # Authentication handling with user store
+│   ├── server_private.pem    # RSA private key
+│   └── server_public.pem     # RSA public key (sent to clients)
 ├── client/
-│   ├── cli_client.py       # Terminal-based chat client
-│   ├── gui_client.py       # GUI chat client (Tkinter)
-│   ├── downloads/          # Received files auto-saved here
+│   ├── cli_client.py         # Terminal-based chat client
+│   ├── gui_client.py         # GUI chat client (Tkinter)
+│   ├── run_gui.py            # Launch GUI with login/register first
+│   ├── downloads/            # Received files auto-saved here
 ├── .gitignore
 ├── requirements.txt
 └── README.md
