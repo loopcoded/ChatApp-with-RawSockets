@@ -19,7 +19,10 @@ class ChatGUI:
         self.root.title("Secure Chat Client")
         self.root.geometry("1000x700")
         self.root.configure(bg='#2c3e50')
-        
+
+        # Hide main window until login/register is done
+        self.root.withdraw()
+
         # Chat client variables
         self.client_socket = None
         self.username = None
@@ -33,11 +36,6 @@ class ChatGUI:
         self.response_event = threading.Event()
         
         self.show_auth_window()
-        if not self.username:
-            self.root.destroy()  # User closed auth window
-            return
-        self.setup_gui()
-        self.connect_to_server()
 
     def show_auth_window(self):
         auth_window = Toplevel()
@@ -58,6 +56,10 @@ class ChatGUI:
                     messagebox.showinfo("Success", msg)
                     auth_window.destroy()
                     self.username = uname
+                    # Show main window and setup GUI
+                    self.root.deiconify()
+                    self.setup_gui()
+                    self.connect_to_server()
                 else:
                     messagebox.showerror("Error", msg)
 
@@ -66,6 +68,10 @@ class ChatGUI:
                     messagebox.showinfo("Success", "Login successful.")
                     auth_window.destroy()
                     self.username = uname
+                    # Show main window and setup GUI
+                    self.root.deiconify()
+                    self.setup_gui()
+                    self.connect_to_server()
                 else:
                     messagebox.showerror("Error", "Login failed.")
 
@@ -212,40 +218,33 @@ class ChatGUI:
                 data = self.client_socket.recv(4096)
                 if not data:
                     break
-                
+
                 try:
                     decoded = data.decode()
-                    if decoded.startswith("[Server]: Currently online:"):
-                        self.update_user_list(decoded)
-                    else:
-                        self.display_message(decoded)
-                    # Handle server responses for file transfers
+                    # --- Move this block up ---
                     if decoded.startswith("[Server]:") and ("Ready" in decoded or "rejected" in decoded or "not found" in decoded or "sent successfully" in decoded):
                         with self.file_transfer_lock:
                             self.pending_server_response = decoded
                             self.response_event.set()
-                        continue
-                    
-                    # Handle file transfers
-                    if decoded.startswith("[File]:"):
-                        self.handle_incoming_file(decoded)
-                        continue
-                    
-                    # Handle user join/leave messages to update user list
-                    if "joined the chat" in decoded or "left the chat" in decoded:
+                        continue  # Don't process further, this is for file transfer
+
+                    if decoded.startswith("[Server]: Currently online:"):
                         self.update_user_list(decoded)
-                    
-                    # Display message
-                    self.display_message(decoded)
-                    
+                    elif decoded.startswith("[File]:"):
+                        self.handle_incoming_file(decoded)
+                    elif "joined the chat" in decoded or "left the chat" in decoded:
+                        self.update_user_list(decoded)
+                    else:
+                        self.display_message(decoded)
+
                 except UnicodeDecodeError:
                     self.add_message("Received binary data", "system")
-                
+
             except Exception as e:
                 if self.connected:
                     self.add_message(f"Connection error: {e}", "system")
                 break
-        
+
         self.connected = False
         self.status_label.config(text="Disconnected", fg='#e74c3c')
     
@@ -261,10 +260,18 @@ class ChatGUI:
                 "Incoming File",
                 f"You have received a file: '{file_name}' ({file_size} bytes).\n\nDo you want to download it?"
             )
-    
+
             if not consent:
                 self.add_message(f"❌ You declined the file: '{file_name}'", "system")
-                return  # Skip receiving the file
+                # Discard the incoming file data to keep the socket in sync
+                bytes_received = 0
+                while bytes_received < file_size:
+                    chunk_size = min(4096, file_size - bytes_received)
+                    chunk = self.client_socket.recv(chunk_size)
+                    if not chunk:
+                        break
+                    bytes_received += len(chunk)
+                return  # Skip saving the file
             
             self.add_message(f"Receiving file '{file_name}' ({file_size} bytes)...", "system")
             
