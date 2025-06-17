@@ -34,6 +34,9 @@ This is not just another chat app. `ChatSecure` is a **system-level networking p
 ![WhatsApp Image 2025-06-07 at 13 29 49_b2bd96c9](https://github.com/user-attachments/assets/06053978-a672-4070-ad41-f0b91b15fb80)
 >sharing private files
 
+![image](https://github.com/user-attachments/assets/95a6fdc3-746d-486d-b8ff-279cc200bd2c)
+>asking permission to download the file to the reciever or not
+
 ![WhatsApp Image 2025-06-07 at 13 30 14_2033da66](https://github.com/user-attachments/assets/6e204601-30bd-4e63-b5dd-aca8edf8d500)
 >confirmation of recieving file
 
